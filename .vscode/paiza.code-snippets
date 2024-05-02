@@ -1,0 +1,27 @@
+{
+  "mapSplit": {
+    "scope": "python",
+    "prefix": "map",
+    "body": "map(int, input().split())"
+  },
+  "S": {
+    "scope": "python",
+    "prefix": "S",
+    "body": "S = list(input())"
+  },
+  "N": {
+    "scope": "python",
+    "prefix": "N",
+    "body": "N = int(input())"
+  },
+  "listMap": {
+    "scope": "python",
+    "prefix": "list",
+    "body": "list(map(int, input().split()))"
+  },
+  "for": {
+    "scope": "python",
+    "prefix": "for",
+    "body": "for i in range(N):\n  "
+  }
+}
