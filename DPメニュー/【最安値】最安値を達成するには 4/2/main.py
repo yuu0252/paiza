@@ -2,6 +2,7 @@ N, a, b = map(int, input().split())
 dp = [10000000] * (N+5)
 
 dp[0] = 0
+dp[1] = a
 
 for i in range(2, N+5):
   if i >= 2:
