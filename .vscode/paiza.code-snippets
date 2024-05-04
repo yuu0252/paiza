@@ -9,10 +9,10 @@
     "prefix": "S",
     "body": "S = list(input())"
   },
-  "N": {
+  "intInput": {
     "scope": "python",
-    "prefix": "N",
-    "body": "N = int(input())"
+    "prefix": "int",
+    "body": "int(input())"
   },
   "listMap": {
     "scope": "python",
