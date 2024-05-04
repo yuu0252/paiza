@@ -1,10 +1,12 @@
-s = "1 5 9 7 5 3 2 5 8 4"
-A = list(map(int, s.split()))
-N = len(A)
+a = [0] * 11
+L = [1, 1, 3, 3, 7]
+R = [3, 8, 8, 6, 9]
 
-sums = [0] * (N+1)
+for i in range(5):
+  a[L[i] - 1] += 1
+  a[R[i]] -= 1
 
-for i in range(N):
-  sums[i+1] = sums[i] + A[i]
+for i in range(10):
+  a[i+1] += a[i]
 
-print(sums[7] - sums[1])
+print(max(a))
