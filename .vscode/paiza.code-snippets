@@ -23,5 +23,10 @@
     "scope": "python",
     "prefix": "for",
     "body": "for i in range(N):\n  "
+  },
+  "listRange": {
+    "scope": "python",
+    "prefix": "list",
+    "body": "[int(input()) for _ in range(N)]"
   }
 }
