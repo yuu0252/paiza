@@ -1,26 +1,31 @@
-from collections import deque
+n, s, t = map(int, input().split())
+k = int(input())
+S = list(map(int, input().split()))
 
-N, S, T = map(int, input().split())
-K = int(input())
-S_list = list(map(int, input().split()))
+ad_list = {}
 
-points = {}
+for i in range(1, n+1):
+  v = int(input())
+  ad_list[i] = list(map(int, input().split()))
 
-for _ in range(N):
-  n = int(input())
-  a = list(map(int, input().split()))
-  points[n] = a
+for i in S:
+    for j in ad_list[i]:
+        ad_list[j].remove(i)
 
-q = deque()
-q.append((S, [S]))
+paths = []
+def dfs(v, path):
+  for i in ad_list[v]:
+    if i not in path:
+      path.append(i)
+      if i == t:
+          paths.append(tuple(path))
+      else:
+          dfs(i, path)
+      path.pop()
 
-# while q:
-#   now, path = q.popleft()
-#   if now == T:
-#     print(*path)
-#   for i in points[now]:
-#     if i not in path:
-#       q.append((i, [*path, i]))
 
-print(S)
-print(points)
+dfs(s, [s])
+
+print(len(paths))
+for i in paths:
+   print(*i)
