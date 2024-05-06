@@ -22,11 +22,11 @@
   "for": {
     "scope": "python",
     "prefix": "for",
-    "body": "for i in range(N):\n  "
+    "body": "for i in range(n):\n  "
   },
   "listRange": {
     "scope": "python",
     "prefix": "list",
-    "body": "[int(input()) for _ in range(N)]"
+    "body": "[int(input()) for _ in range(n)]"
   }
 }
