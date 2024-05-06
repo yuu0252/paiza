@@ -1,4 +1,4 @@
-n = int(input())
+n, k = map(int, input().split())
 ad_list = {}
 
 for i in range(1, n+1):
@@ -12,11 +12,14 @@ def dfs(v, connected_comp):
             dfs(i, connected_comp)
     return connected_comp
 
-cnt = 0
-not_visit = set(range(1, n+1))
-while len(not_visit) > 0:
-    v = not_visit.pop()
-    not_visit -= set(dfs(v, [v]))
-    cnt += 1
+not_visited = set(range(1, n+1))
 
-print(cnt)
+while len(not_visited) > 0:
+    v = not_visited.pop()
+    res = dfs(v, [v])
+    if len(res) > k:
+        print("No")
+        exit()
+    not_visited -= set(res)
+
+print("Yes")
