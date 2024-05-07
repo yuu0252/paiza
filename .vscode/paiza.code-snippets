@@ -28,5 +28,15 @@
     "scope": "python",
     "prefix": "list",
     "body": "[int(input()) for _ in range(n)]"
+  },
+  "gridNum": {
+    "scope": "python",
+    "prefix": "gridNum",
+    "body": "[list(map(int, input().split())) for _ in range(h)]"
+  },
+  "gridStr": {
+    "scope": "python",
+    "prefix": "gridStr",
+    "body": "[list(input()) for _ in range(h)]"
   }
 }
