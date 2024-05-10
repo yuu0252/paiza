@@ -38,5 +38,10 @@
     "scope": "python",
     "prefix": "gridStr",
     "body": "[list(input()) for _ in range(h)]"
+  },
+  "gridDirections": {
+    "scope": "python",
+    "prefix": "gridDirections",
+    "body": "dx = [0, 1, 0, -1]\ndy = [-1, 0, 1, 0]"
   }
 }
