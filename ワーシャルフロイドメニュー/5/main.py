@@ -15,6 +15,6 @@ for transit in range(n):
                 A[start][goal], A[start][transit] + A[transit][goal]
             )
 
-for j in range(q):
+for _ in range(q):
     d, e = map(int, input().split())
     print(A[d-1][e-1])
