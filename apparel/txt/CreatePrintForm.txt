@@ -1,0 +1,367 @@
+Public homeWidth As Double
+Public homeHeight As Double
+Public homeTop As Double
+Public homeLeft As Double
+
+Public Sub CreateHomeBase()
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, homeLeft, homeTop, homeWidth, homeHeight)
+    .Fill.ForeColor.RGB = RGB(255, 255, 255)
+    .Line.Visible = msoFalse
+    .Adjustments(1) = 0.05
+    With .Shadow
+      .Type = 25
+      .Blur = 20
+    End With
+  End With
+End Sub
+
+Private Sub CreateTitle()
+  With Home.Shapes.AddTextbox(msoTextOrientationHorizontal, homeLeft + homeWidth * 0.5 - 125, homeTop + homeHeight * 0.075, 250, 25)
+    .Line.Visible = False
+    With .TextFrame
+      .VerticalAlignment = xlVAlignCenter
+      .HorizontalAlignment = xlHAlignCenter
+            
+      With .Characters
+        .Text = "アパレル品出しフォーマット"
+        .Font.size = 18
+        .Font.Bold = True
+        .Font.color = RGB(80, 80, 80)
+      End With
+    End With
+  End With
+End Sub
+
+Private Sub onClickSelectAll()
+  Dim checkBox As checkBox
+
+  Dim i As Integer
+  i = 10
+  
+  For Each checkBox In Home.CheckBoxes
+      If checkBox.Name = "hourCheckbox" & i Then
+        If Home.CheckBoxes("selectAll").Value = 1 Then
+          checkBox.Value = True
+        Else
+          checkBox.Value = False
+        End If
+        i = i + 1
+      End If
+  Next
+
+End Sub
+
+Private Sub CreateHoursOptions()
+  ThisWorkbook.Sheets("Home").Shapes("ChoseButton").Delete
+  Dim rectWidth As Double
+  Dim rectHeight As Double
+  Dim rectLeft As Double
+  Dim rectTop As Double
+  rectWidth = homeWidth * 0.4
+  rectHeight = homeHeight * 0.4
+  rectLeft = homeLeft + homeWidth * 0.1
+  rectTop = homeTop + homeHeight * 0.2
+  
+  Dim i As Integer
+  For i = 0 To 11
+    Dim checkLeft As Double
+    Dim checkTop As Double
+    Dim checkWidth As Double
+    Dim checkHeight As Double
+    checkLeft = rectLeft + rectWidth * (i \ 4) * 0.3 + rectWidth * 0.1
+    checkTop = rectTop + rectHeight * (i Mod 4) * 0.2 + rectHeight * 0.1
+    checkWidth = rectWidth / 3
+    checkHeight = rectHeight / 4
+    With Home.CheckBoxes.add(checkLeft, checkTop, checkWidth, checkHeight)
+    .Select
+    If i < 11 Then
+      .Name = "hourCheckbox" & i + 10
+      .Caption = i + 10
+      .Text = i + 10
+    Else
+      .Name = "selectAll"
+      .Caption = "全時間"
+      .Text = "全時間"
+      .OnAction = "onClickSelectAll"
+    End If
+    End With
+  Next i
+  
+  ThisWorkbook.Sheets("Home").Range("A1").Select
+End Sub
+
+Private Sub CreateChoseButton()
+  Dim rectWidth As Double
+  Dim rectHeight As Double
+  Dim rectLeft As Double
+  Dim rectTop As Double
+  rectWidth = homeWidth * 0.4
+  rectHeight = homeHeight * 0.4
+  rectLeft = homeLeft + homeWidth * 0.1
+  rectTop = homeTop + homeHeight * 0.2
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, rectLeft, rectTop, rectWidth, rectHeight)
+    .Fill.ForeColor.RGB = RGB(255, 255, 255)
+    .Line.ForeColor.RGB = RGB(100, 100, 100)
+    .Adjustments(1) = 0.05
+  End With
+  
+  Dim titleWidth As Double
+  Dim titleHeight As Double
+  Dim titleLeft As Double
+  Dim titleTop As Double
+  titleWidth = rectWidth / 2.5
+  titleHeight = 30
+  titleLeft = rectLeft + rectWidth / 2 - titleWidth / 2
+  titleTop = rectTop - titleHeight / 2
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, titleLeft, titleTop, titleWidth, titleHeight)
+    .Fill.ForeColor.RGB = RGB(255, 255, 255)
+    .Line.Visible = msoFalse
+    With .TextFrame
+      .VerticalAlignment = xlVAlignCenter
+      .HorizontalAlignment = xlHAlignCenter
+      With .Characters
+        .Font.color = RGB(100, 100, 100)
+        .Font.size = 14
+        .Font.Bold = True
+        .Text = "時間選択"
+      End With
+    End With
+  End With
+  
+  Dim sideButtonWidth As Double
+  Dim sideButtonHeight As Double
+  Dim sideButtonLeft As Double
+  Dim sideButtonTop As Double
+  
+  sideButtonWidth = 90
+  sideButtonHeight = 30
+  sideButtonLeft = rectLeft + rectWidth / 2 - sideButtonWidth / 2
+  sideButtonTop = rectTop - sideButtonHeight
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, sideButtonLeft, sideButtonTop + rectWidth * 0.45, sideButtonWidth, sideButtonHeight)
+    .Fill.ForeColor.RGB = RGB(100, 100, 100)
+    .OnAction = "CreateHoursOptions"
+    .Line.ForeColor.RGB = RGB(150, 150, 150)
+    .Name = ("ChoseButton")
+    With .TextFrame
+      .VerticalAlignment = xlVAlignCenter
+      .HorizontalAlignment = xlHAlignCenter
+      With .Characters
+        .Font.color = RGB(255, 255, 255)
+        .Font.size = 14
+        .Font.Bold = True
+        .Text = "時間指定"
+      End With
+    End With
+    
+  End With
+End Sub
+
+Private Sub PrintData()
+  Dim checkBox As checkBox
+  Dim labels() As String
+
+  Dim i As Integer
+  Dim j As Integer
+  
+  i = 10
+  j = 0
+  
+  For Each checkBox In Home.CheckBoxes
+      If checkBox.Name = "hourCheckbox" & i Then
+        If checkBox.Value = 1 Then
+          ReDim Preserve labels(j)
+          labels(j) = checkBox.Caption
+          j = j + 1
+        End If
+        i = i + 1
+      End If
+  Next
+  
+  If j = 0 Then
+    Call FetchDataFunction(GetCurrentTimestamp())
+  Else
+    Call FetchDataFunction(GetCurrentTimestamp(), labels)
+  End If
+End Sub
+
+Private Sub CreatePrintButton()
+  Dim printButtonWidth As Double
+  Dim printButtonHeight As Double
+  Dim printButtonLeft As Double
+  Dim printButtonTop As Double
+  
+  printButtonWidth = homeWidth * 0.3
+  printButtonHeight = 70
+  printButtonLeft = homeLeft + homeWidth - homeWidth * 0.1 - printButtonWidth
+  printButtonTop = homeTop + homeHeight - homeHeight * 0.1 - printButtonHeight
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, printButtonLeft, printButtonTop, printButtonWidth, printButtonHeight)
+    .Fill.ForeColor.RGB = RGB(100, 149, 237)
+    .OnAction = "PrintData"
+    .Line.Visible = False
+    With .TextFrame
+      .VerticalAlignment = xlVAlignCenter
+      .HorizontalAlignment = xlHAlignCenter
+      With .Characters
+        .Font.color = RGB(255, 255, 255)
+        .Font.size = 18
+        .Font.Bold = True
+        .Text = "自動印刷"
+      End With
+    End With
+    With .Shadow
+      .Type = 25
+      .Blur = 5
+    End With
+  End With
+End Sub
+
+Private Sub CreateSideButtons()
+  Dim rectWidth As Double
+  Dim rectHeight As Double
+  Dim rectLeft As Double
+  Dim rectTop As Double
+  rectWidth = homeWidth * 0.3
+  rectHeight = homeHeight * 0.4
+  rectLeft = homeLeft + homeWidth - rectWidth - homeWidth * 0.1
+  rectTop = homeTop + homeHeight * 0.2
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, rectLeft, rectTop, rectWidth, rectHeight)
+    .Fill.ForeColor.RGB = RGB(255, 255, 255)
+    .Line.ForeColor.RGB = RGB(100, 100, 100)
+    .Adjustments(1) = 0.05
+  End With
+  
+  Dim titleWidth As Double
+  Dim titleHeight As Double
+  Dim titleLeft As Double
+  Dim titleTop As Double
+  titleWidth = rectWidth / 2
+  titleHeight = 30
+  titleLeft = rectLeft + rectWidth / 2 - titleWidth / 2
+  titleTop = rectTop - titleHeight / 2
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, titleLeft, titleTop, titleWidth, titleHeight)
+    .Fill.ForeColor.RGB = RGB(255, 255, 255)
+    .Line.Visible = msoFalse
+    With .TextFrame
+      .VerticalAlignment = xlVAlignCenter
+      .HorizontalAlignment = xlHAlignCenter
+      With .Characters
+        .Font.color = RGB(100, 100, 100)
+        .Font.size = 14
+        .Font.Bold = True
+        .Text = "ガイド"
+      End With
+    End With
+  End With
+  
+  Dim sideButtonWidth As Double
+  Dim sideButtonHeight As Double
+  Dim sideButtonLeft As Double
+  Dim sideButtonTop As Double
+  
+  sideButtonWidth = 90
+  sideButtonHeight = 30
+  sideButtonLeft = rectLeft + rectWidth / 2 - sideButtonWidth / 2
+  sideButtonTop = rectTop - sideButtonHeight
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, sideButtonLeft, sideButtonTop + rectWidth * 0.45, sideButtonWidth, sideButtonHeight)
+    .Fill.ForeColor.RGB = RGB(100, 100, 100)
+    .OnAction = "DeleteAllShapes"
+    .Line.ForeColor.RGB = RGB(150, 150, 150)
+    With .TextFrame
+      .VerticalAlignment = xlVAlignCenter
+      .HorizontalAlignment = xlHAlignCenter
+      With .Characters
+        .Font.color = RGB(255, 255, 255)
+        .Font.size = 14
+        .Font.Bold = True
+        .Text = "説明書"
+      End With
+    End With
+    
+  End With
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, sideButtonLeft, sideButtonTop + rectWidth * 0.8, sideButtonWidth, sideButtonHeight)
+    .Fill.ForeColor.RGB = RGB(100, 100, 100)
+    .OnAction = "DeleteAllShapes"
+    .Line.ForeColor.RGB = RGB(150, 150, 150)
+    With .TextFrame
+      .VerticalAlignment = xlVAlignCenter
+      .HorizontalAlignment = xlHAlignCenter
+      With .Characters
+        .Font.color = RGB(255, 255, 255)
+        .Font.size = 14
+        .Font.Bold = True
+        .Text = "履歴"
+      End With
+    End With
+  End With
+End Sub
+
+Private Sub CreateOptionMenu()
+  Dim rectWidth As Double
+  Dim rectHeight As Double
+  Dim rectLeft As Double
+  Dim rectTop As Double
+  rectWidth = homeWidth * 0.4
+  rectHeight = homeHeight * 0.2
+  rectLeft = homeLeft + homeWidth * 0.1
+  rectTop = homeTop + homeHeight - rectHeight - homeHeight * 0.1
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, rectLeft, rectTop, rectWidth, rectHeight)
+    .Fill.ForeColor.RGB = RGB(255, 255, 255)
+    .Line.ForeColor.RGB = RGB(100, 100, 100)
+    .Adjustments(1) = 0.05
+  End With
+  
+  Dim titleWidth As Double
+  Dim titleHeight As Double
+  Dim titleLeft As Double
+  Dim titleTop As Double
+  titleWidth = rectWidth / 2
+  titleHeight = 30
+  titleLeft = rectLeft + rectWidth / 2 - titleWidth / 2
+  titleTop = rectTop - titleHeight / 2
+  
+  With Home.Shapes.AddShape(msoShapeRoundedRectangle, titleLeft, titleTop, titleWidth, titleHeight)
+    .Fill.ForeColor.RGB = RGB(255, 255, 255)
+    .Line.Visible = msoFalse
+    With .TextFrame
+      .VerticalAlignment = xlVAlignCenter
+      .HorizontalAlignment = xlHAlignCenter
+      With .Characters
+        .Font.color = RGB(100, 100, 100)
+        .Font.size = 14
+        .Font.Bold = True
+        .Text = "オプション"
+      End With
+    End With
+  End With
+  
+  
+End Sub
+
+Private Sub CreateButtons()
+  Call CreatePrintButton
+  Call CreateSideButtons
+End Sub
+
+
+Public Sub CreateHomeComponent(windowWidth As Double, windowHeight As Double)
+  homeWidth = windowWidth * 0.8
+  homeHeight = windowHeight * 0.6
+  homeTop = windowHeight / 2 - homeHeight * 0.65
+  homeLeft = windowWidth / 2 - homeWidth * 0.35
+  
+  Call CreateHomeBase
+  Call CreateTitle
+  Call CreateChoseButton
+  Call CreateButtons
+  Call CreateOptionMenu
+End Sub
+

@@ -1,0 +1,134 @@
+Public Sub PrintResult(result As Variant)
+    Dim ws As Worksheet
+    Dim currentRow As Long
+    Dim maxCol As Long
+    Dim i As Integer, j As Integer, k As Integer
+    Dim codeColl As Collection
+    Dim colorColl As Collection
+    Dim sizeDict As Object
+    Dim sizeKey As Variant
+    Dim lastRow As Long
+    Dim price As Variant
+
+    Set ws = ThisWorkbook.Worksheets("PrintData")
+    ws.Cells.Clear
+    currentRow = 2
+    maxCol = 0
+
+    For i = 1 To 3
+        ' 各グループの見出しを追加
+        ws.Cells(currentRow - 1, 1).Value = Choose(i, "Men", "Women", "Kids")
+        ws.Cells(currentRow - 1, 1).Font.Bold = True
+        ws.Cells(currentRow - 1, 1).HorizontalAlignment = xlLeft
+
+        ' グループ内のデータ見出しを追加
+        ws.Cells(currentRow, 2).Value = "品番"
+        ws.Cells(currentRow, 3).Value = "カラー"
+        ws.Cells(currentRow, 4).Value = "サイズ"
+        ws.Cells(currentRow, 5).Value = "価格"
+        ws.Range(ws.Cells(currentRow, 2), ws.Cells(currentRow, 5)).Font.Bold = True ' 見出しを太字に
+        ws.Range(ws.Cells(currentRow, 2), ws.Cells(currentRow, 5)).HorizontalAlignment = xlCenter ' 中央揃え
+        ws.Range(ws.Cells(currentRow, 2), ws.Cells(currentRow, 5)).BorderAround Weight:=xlThin ' 見出しの枠線を追加
+        currentRow = currentRow + 1
+
+        For Each codeColl In result(i)
+            Dim startRow As Long, endRow As Long
+            startRow = currentRow
+
+            ws.Cells(currentRow, 2).Value = codeColl("code")
+            Set colorColl = codeColl("colors")
+            price = 0 ' 初期化
+            For Each sizeDict In colorColl
+                Dim colorStartRow As Long, colorEndRow As Long
+                colorStartRow = currentRow
+
+                ' 先頭の「C」を削除してカラーを設定
+                If Left(sizeDict("color"), 1) = "C" Then
+                    ws.Cells(currentRow, 3).Value = mid(sizeDict("color"), 2)
+                Else
+                    ws.Cells(currentRow, 3).Value = sizeDict("color")
+                End If
+
+                For Each sizeKey In sizeDict.Keys
+                    If sizeKey <> "color" And sizeKey <> "price" Then
+                        If sizeDict(sizeKey) > 0 Then
+                            ws.Cells(currentRow, 4).Value = sizeKey & "(" & sizeDict(sizeKey) & ")"
+                            currentRow = currentRow + 1
+                        End If
+                    End If
+                Next sizeKey
+                If sizeDict.exists("price") Then
+                    price = sizeDict("price") * 1.1 ' 税込み価格に計算
+                End If
+
+                colorEndRow = currentRow - 1
+                ' カラーセルの結合
+                If colorStartRow < colorEndRow Then
+                    ws.Range(ws.Cells(colorStartRow, 3), ws.Cells(colorEndRow, 3)).Merge
+                End If
+                ' サイズセルの枠線削除
+                For k = colorStartRow To colorEndRow - 1
+                    ws.Cells(k, 4).Borders(xlEdgeBottom).LineStyle = xlNone
+                Next k
+                ' カラーごとの下枠線を追加
+                ws.Range(ws.Cells(colorStartRow, 3), ws.Cells(colorEndRow, 4)).Borders(xlEdgeBottom).Weight = xlThin
+            Next sizeDict
+
+            endRow = currentRow - 1
+            ws.Cells(startRow, 5).Value = price
+
+            ' コードセルと価格セルの結合
+            If startRow < endRow Then
+                ws.Range(ws.Cells(startRow, 2), ws.Cells(endRow, 2)).Merge
+                ws.Range(ws.Cells(startRow, 5), ws.Cells(endRow, 5)).Merge
+            End If
+
+            ' セルの枠線設定
+            With ws
+                .Range(.Cells(startRow, 2), .Cells(endRow, 2)).BorderAround Weight:=xlThin
+                .Range(.Cells(startRow, 3), .Cells(endRow, 3)).BorderAround Weight:=xlThin
+                .Range(.Cells(startRow, 4), .Cells(endRow, 4)).BorderAround Weight:=xlThin
+                .Range(.Cells(startRow, 5), .Cells(endRow, 5)).BorderAround Weight:=xlThin
+                
+                ' カラーセルの右側の枠線削除
+                .Range(.Cells(startRow, 3), .Cells(endRow, 3)).Borders(xlEdgeRight).LineStyle = xlNone
+            End With
+
+            ' 価格セルの表示形式を通貨形式（円記号付き）に設定
+            ws.Cells(startRow, 5).NumberFormat = """\""#,##0"
+
+            ' 品番に基づくセルの塗りつぶし
+            If InStr(codeColl("code"), "S") > 0 Then
+                ws.Range(ws.Cells(startRow, 2), ws.Cells(endRow, 2)).Interior.color = RGB(173, 216, 230) ' 青
+            ElseIf InStr(codeColl("code"), "P") > 0 Then
+                ws.Range(ws.Cells(startRow, 2), ws.Cells(endRow, 2)).Interior.color = RGB(255, 192, 203) ' ピンク
+            ElseIf InStr(codeColl("code"), "MJ") > 0 Or InStr(codeColl("code"), "WJ") > 0 Then
+                ws.Range(ws.Cells(startRow, 2), ws.Cells(endRow, 2)).Interior.color = RGB(150, 250, 160) ' 緑
+            End If
+        Next codeColl
+
+        currentRow = currentRow + 2
+    Next i
+
+    ' セル全体の中央揃え
+    ws.Cells.HorizontalAlignment = xlCenter
+    ws.Cells.VerticalAlignment = xlCenter
+
+    ' 列幅の初期化
+    ws.Columns("A:E").ColumnWidth = 12
+
+    ' 行の高さを固定値に設定
+    Dim row As Long
+    For row = 1 To currentRow
+        ws.Rows(row).RowHeight = 20 ' 固定値に設定（必要に応じて調整）
+    Next row
+    
+    Application.Quit
+    Application.DisplayAlerts = False
+    Workbooks("history.xlsx").Close
+    Workbooks("sales and returns report.xlsm").Close
+    ThisWorkbook.Close
+    Application.DisplayAlerts = True
+    
+End Sub
+

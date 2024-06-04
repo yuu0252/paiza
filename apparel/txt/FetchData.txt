@@ -1,0 +1,462 @@
+Option Explicit
+Dim databook As Workbook
+Dim history As Workbook
+Dim historyPath As String
+
+Public Function GetCurrentTimestamp() As String
+    GetCurrentTimestamp = Format(Now, "yyyyMMddhhmm")
+End Function
+
+Function IsInArray(valueToFind As Variant, arr As Variant) As Boolean
+    Dim i As Integer
+    IsInArray = False
+    For i = LBound(arr) To UBound(arr)
+        If arr(i) = valueToFind Then
+            IsInArray = True
+            Exit Function
+        End If
+    Next i
+End Function
+
+Private Sub WriteHistory(hour As Variant, isYesterday As Boolean, Optional add As Variant)
+  If IsMissing(add) Then
+    history.Sheets(1).Range("B1").Value = hour
+  Else
+    If history.Sheets(1).Range("C1").Value = "" Then
+      If isYesterday Then
+        history.Sheets(1).Range("C2").Value = Join(add, ",")
+      Else
+        history.Sheets(1).Range("C2").Value = Join(add, ",")
+      End If
+    Else
+      If isYesterday Then
+        history.Sheets(1).Range("C2").Value = history.Sheets(1).Range("C2").Value & "," & Join(add, ",")
+      Else
+        history.Sheets(1).Range("C2").Value = history.Sheets(1).Range("C1").Value & "," & Join(add, ",")
+      End If
+    End If
+  End If
+  history.Save
+End Sub
+
+Private Sub InitializeHistory()
+  Dim nowDate As String
+  nowDate = Left(GetCurrentTimestamp(), 8)
+  If history.Sheets(1).Range("A1").Value < nowDate Then
+    history.Sheets(1).Rows(1).Insert
+    history.Sheets(1).Range("A1").Value = nowDate
+    history.Sheets(1).Range("B1").Value = history.Sheets(1).Range("B2").Value
+  End If
+End Sub
+
+Function CompareTime(time As String) As Boolean
+    Dim historyTime As String
+
+    historyTime = CDbl(history.Sheets(1).Range("B1").Value)
+
+    CompareTime = (historyTime < CDbl(time))
+End Function
+
+
+
+Public Sub FetchDataFunction(nowTimestamp As String, Optional hours As Variant)
+    
+    Dim genders As Variant
+    Dim strings As Variant
+    Dim colors As Variant
+    Dim sizes As Variant
+    Dim data() As Variant
+    Dim n As Integer
+    Dim i As Integer
+    Dim gnum As Integer
+    Dim g As String
+    Dim s As String
+    Dim c As String
+    Dim size As String
+    Dim price As Variant
+    Dim rndStringIndex As Integer
+    Dim historyHour() As String
+    Dim startDate As String
+    Dim isYesterday As Boolean
+    
+    
+    historyPath = ThisWorkbook.Path & "\history.xlsx"
+    
+
+    Set databook = Workbooks.Open("C:\Users\yuki\OneDrive\デスクトップ\sales and returns report.xlsm")
+    Set history = Workbooks.Open(historyPath)
+    
+    Call InitializeHistory
+    
+    isYesterday = False
+    startDate = Replace(databook.Sheets(1).Range("AO2"), "/", "")
+    If startDate = history.Sheets(1).Range("A2") Then
+      isYesterday = True
+    End If
+    If isYesterday Then
+      historyHour = Split(history.Sheets(1).Range("C2"), ",")
+    Else
+      historyHour = Split(history.Sheets(1).Range("C1"), ",")
+    End If
+    
+    n = 1
+    ' データの範囲を特定
+    For i = 2 To 1000
+        Dim target As String
+        Dim category As String
+        target = "C" & i
+        category = databook.Worksheets(1).Range(target).Value
+        If category = "アパレル" Then
+          Dim hRange As String
+          Dim tRange As String
+          Dim h As String
+          Dim t As String
+          Dim isPassed As Boolean
+          
+          tRange = "AI" & i
+          t = databook.Worksheets(1).Range(tRange).Value
+          hRange = "AH" & i
+          h = databook.Worksheets(1).Range(hRange).Value
+          isPassed = CompareTime(t)
+          
+          If isPassed Then
+            If Not IsMissing(hours) Then
+              If IsInArray(h, hours) Then
+                n = n + 1
+              End If
+            Else
+              If Not IsInArray(h, historyHour) Then
+                n = n + 1
+              End If
+            End If
+          End If
+        End If
+    Next i
+    
+    ReDim data(1 To n, 1 To 5)
+    
+    Dim j As Integer
+    j = 1
+    
+    ' データを取得
+    For i = 2 To 1000
+      target = "C" & i
+      category = databook.Worksheets(1).Range(target).Value
+      
+      Dim isExist As Boolean
+      isExist = False
+      tRange = "AI" & i
+      t = databook.Worksheets(1).Range(tRange).Value
+      hRange = "AH" & i
+      h = databook.Worksheets(1).Range(hRange).Value
+      
+      If category = "アパレル" Then
+        isPassed = CompareTime(t)
+        If isPassed Then
+          If Not IsMissing(hours) Then
+            If IsInArray(h, hours) Then
+             j = j + 1
+             isExist = True
+            End If
+          Else
+            If Not IsInArray(h, historyHour) Then
+              j = j + 1
+              isExist = True
+            End If
+          End If
+        End If
+      End If
+      If isExist Then
+        g = "D" & (i + 1)
+        s = "G" & (i + 1)
+        c = "M" & (i + 1)
+        size = "J" & (i + 1)
+        price = "N" & (i + 1)
+        
+        data(j, 1) = databook.Worksheets(1).Range(g).Value
+        data(j, 2) = databook.Worksheets(1).Range(s).Value
+        data(j, 3) = databook.Worksheets(1).Range(c).Value
+        data(j, 4) = databook.Worksheets(1).Range(size).Value
+        data(j, 5) = databook.Worksheets(1).Range(price).Value
+      End If
+    Next i
+    
+    If Not IsMissing(hours) Then
+      Call WriteHistory(nowTimestamp, isYesterday, hours)
+    Else
+      Call WriteHistory(nowTimestamp, isYesterday)
+    End If
+    
+    ' データを処理
+    ProcessData data
+End Sub
+
+Sub ProcessData(data As Variant)
+    Dim genders As Variant
+    Dim sizes As Variant
+    Dim result(1 To 3) As Collection
+    Dim i As Integer
+    Dim gender As String
+    Dim code As String
+    Dim color As String
+    Dim size As String
+    Dim price As Long
+    Dim g As Integer
+    Dim codeColl As Collection
+    Dim colorColl As Collection
+    Dim sizeDict As Object
+    Dim sizeKey As Variant
+    Dim exists As Boolean
+    
+    genders = Array("Men", "Women", "Kids")
+    sizes = Array("XS", "S", "M", "L", "XL", "2XL")
+    
+    ' 初期化
+    For i = 1 To 3
+        Set result(i) = New Collection
+    Next i
+    
+    ' データを格納
+    For i = LBound(data, 1) To UBound(data, 1)
+        gender = data(i, 1)
+        code = data(i, 2)
+        color = data(i, 3)
+        size = data(i, 4)
+        price = data(i, 5)
+        
+        g = GetGenderIndex(gender, genders)
+        
+        ' コードの存在を確認
+        exists = False
+        For Each codeColl In result(g + 1)
+            If codeColl("code") = code Then
+                exists = True
+                Exit For
+            End If
+        Next codeColl
+        
+        If Not exists Then
+            Set codeColl = New Collection
+            codeColl.add code, "code"
+            Set colorColl = New Collection
+            codeColl.add colorColl, "colors"
+            result(g + 1).add codeColl
+        Else
+            Set colorColl = codeColl("colors")
+        End If
+        
+        ' カラーの存在を確認
+        exists = False
+        For Each sizeDict In colorColl
+            If sizeDict("color") = color Then
+                exists = True
+                Exit For
+            End If
+        Next sizeDict
+        
+        If Not exists Then
+            Set sizeDict = CreateObject("Scripting.Dictionary")
+            sizeDict.add "color", color
+            For Each sizeKey In sizes
+                sizeDict.add sizeKey, 0
+            Next sizeKey
+            colorColl.add sizeDict
+        End If
+        
+        ' デバッグ用に値をチェック
+        If IsNumeric(sizeDict(size)) And sizeDict(size) >= 0 Then
+            sizeDict(size) = sizeDict(size) + 1
+        Else
+            MsgBox "Invalid size or count for code: " & code & ", color: " & color & ", size: " & size & ", count: " & sizeDict(size)
+            Exit Sub
+        End If
+        
+        If IsNumeric(price) And price >= 0 Then
+            sizeDict("price") = price
+        Else
+            MsgBox "Invalid price for code: " & code & ", price: " & price
+            Exit Sub
+        End If
+    Next i
+    
+    ' 各性別のコードをソート
+    For i = 1 To 3
+        Set result(i) = MergeSortCollection(result(i))
+    Next i
+    
+    ' 結果をシートに出力
+    PrintResult result
+End Sub
+
+Function GetGenderIndex(gender As String, genders As Variant) As Integer
+    Dim i As Integer
+    For i = LBound(genders) To UBound(genders)
+        If genders(i) = gender Then
+            GetGenderIndex = i
+            Exit Function
+        End If
+    Next i
+End Function
+
+Function MergeSortCollection(coll As Collection) As Collection
+    If coll.Count <= 1 Then
+        Set MergeSortCollection = coll
+        Exit Function
+    End If
+    
+    Dim mid As Integer
+    mid = coll.Count \ 2
+    
+    Dim leftColl As New Collection
+    Dim rightColl As New Collection
+    Dim i As Integer
+    
+    For i = 1 To mid
+        leftColl.add coll(i)
+    Next i
+    
+    For i = mid + 1 To coll.Count
+        rightColl.add coll(i)
+    Next i
+    
+    Set leftColl = MergeSortCollection(leftColl)
+    Set rightColl = MergeSortCollection(rightColl)
+    Set MergeSortCollection = MergeCollections(leftColl, rightColl)
+End Function
+
+Function MergeCollections(leftColl As Collection, rightColl As Collection) As Collection
+    Dim result As New Collection
+    Dim lIndex As Integer, rIndex As Integer
+    
+    lIndex = 1
+    rIndex = 1
+    
+    Do While lIndex <= leftColl.Count And rIndex <= rightColl.Count
+        If CompareCodes(CStr(leftColl(lIndex)("code")), CStr(rightColl(rIndex)("code"))) <= 0 Then
+            result.add leftColl(lIndex)
+            lIndex = lIndex + 1
+        Else
+            result.add rightColl(rIndex)
+            rIndex = rIndex + 1
+        End If
+    Loop
+    
+    Do While lIndex <= leftColl.Count
+        result.add leftColl(lIndex)
+        lIndex = lIndex + 1
+    Loop
+    
+    Do While rIndex <= rightColl.Count
+        result.add rightColl(rIndex)
+        rIndex = rIndex + 1
+    Loop
+    
+    Set MergeCollections = result
+End Function
+
+Function CompareCodes(code1 As String, code2 As String) As Integer
+    Dim prefix1 As String
+    Dim prefix2 As String
+    Dim num1 As Long
+    Dim num2 As Long
+    
+    prefix1 = Left(code1, 1)
+    prefix2 = Left(code2, 1)
+    
+    If prefix1 = prefix2 Then
+        num1 = DivideCode(code1)
+        num2 = DivideCode(code2)
+        If num1 < num2 Then
+            CompareCodes = -1
+        ElseIf num1 > num2 Then
+            CompareCodes = 1
+        Else
+            CompareCodes = 0
+        End If
+    Else
+        Select Case prefix1
+            Case "A"
+                CompareCodes = -1
+            Case "M", "W"
+                If prefix2 = "A" Then
+                    CompareCodes = 1
+                Else
+                    CompareCodes = -1
+                End If
+            Case Else
+                CompareCodes = 1
+        End Select
+    End If
+End Function
+
+Function DivideCode(code As String) As Long
+    Dim i As Integer
+    Dim numPart As String
+    
+    For i = 1 To Len(code)
+        If IsNumeric(mid(code, i, 1)) Then
+            numPart = mid(code, i)
+            numPart = Split(numPart, " ")(0) ' スペースで分割して数値部分のみを取得
+            DivideCode = CLng(numPart)
+            Exit Function
+        End If
+    Next i
+    
+    DivideCode = 0
+End Function
+
+Function SortColors(colorColl As Collection) As Collection
+    If colorColl.Count <= 1 Then
+        Set SortColors = colorColl
+        Exit Function
+    End If
+    
+    Dim mid As Integer
+    mid = colorColl.Count \ 2
+    
+    Dim leftColl As New Collection
+    Dim rightColl As New Collection
+    Dim i As Integer
+    
+    For i = 1 To mid
+        leftColl.add colorColl(i)
+    Next i
+    
+    For i = mid + 1 To colorColl.Count
+        rightColl.add colorColl(i)
+    Next i
+    
+    Set leftColl = SortColors(leftColl)
+    Set rightColl = SortColors(rightColl)
+    Set SortColors = MergeCollectionsColors(leftColl, rightColl)
+End Function
+
+Function MergeCollectionsColors(leftColl As Collection, rightColl As Collection) As Collection
+    Dim result As New Collection
+    Dim lIndex As Integer, rIndex As Integer
+    
+    lIndex = 1
+    rIndex = 1
+    
+    Do While lIndex <= leftColl.Count And rIndex <= rightColl.Count
+        If CStr(leftColl(lIndex)("color")) <= CStr(rightColl(rIndex)("color")) Then
+            result.add leftColl(lIndex)
+            lIndex = lIndex + 1
+        Else
+            result.add rightColl(rIndex)
+            rIndex = rIndex + 1
+        End If
+    Loop
+    
+    Do While lIndex <= leftColl.Count
+        result.add leftColl(lIndex)
+        lIndex = lIndex + 1
+    Loop
+    
+    Do While rIndex <= rightColl.Count
+        result.add rightColl(rIndex)
+        rIndex = rIndex + 1
+    Loop
+    
+    Set MergeCollectionsColors = result
+End Function

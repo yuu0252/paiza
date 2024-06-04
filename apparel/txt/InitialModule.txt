@@ -1,0 +1,44 @@
+Public Home As Worksheet
+Private currentWindow As window
+Private windowWidth As Double
+Private windowHeight As Double
+
+Private Sub DeleteAllShapes()
+  ThisWorkbook.Sheets("Home").Activate
+  ThisWorkbook.Sheets("Home").Shapes.SelectAll
+  Selection.Delete
+End Sub
+
+Private Sub Initialize()
+  Set currentWindow = Windows("aparel.xlsm")
+  Set Home = ThisWorkbook.Worksheets("Home")
+  
+  Call DeleteAllShapes
+  Call InitialWindow
+  
+  windowWidth = currentWindow.Width
+  windowHeight = currentWindow.Height
+  
+  Call CreateHomeComponent(windowWidth, windowHeight)
+  
+  ThisWorkbook.Worksheets("Home").Cells(7, 7).Select
+End Sub
+
+Private Sub InitialWindow()
+  With currentWindow
+    .WindowState = xlNormal
+    .Width = 600
+    .Height = 600
+    .DisplayHorizontalScrollBar = False
+    .DisplayVerticalScrollBar = False
+    '.DisplayWorkbookTabs = False
+    .DisplayWorkbookTabs = True
+    .DisplayHeadings = False
+  End With
+End Sub
+
+Sub Auto_Open()
+  Call DeleteAllShapes
+  Call Initialize
+End Sub
+
