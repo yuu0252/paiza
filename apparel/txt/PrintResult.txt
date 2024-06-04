@@ -122,6 +122,14 @@ Public Sub PrintResult(result As Variant)
     For row = 1 To currentRow
         ws.Rows(row).RowHeight = 20 ' 固定値に設定（必要に応じて調整）
     Next row
+
+    ' 印刷範囲の設定
+    ws.PageSetup.PrintArea = ws.Range("A1:E" & currentRow - 1).Address
+    
+    ' PDFとして保存
+    Dim pdfPath As String
+    pdfPath = ThisWorkbook.Path & "\PrintData.pdf"
+    ws.ExportAsFixedFormat Type:=xlTypePDF, Filename:=pdfPath, Quality:=xlQualityStandard
     
     Application.Quit
     Application.DisplayAlerts = False
@@ -129,6 +137,5 @@ Public Sub PrintResult(result As Variant)
     Workbooks("sales and returns report.xlsm").Close
     ThisWorkbook.Close
     Application.DisplayAlerts = True
-    
 End Sub
 
