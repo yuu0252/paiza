@@ -1,0 +1,36 @@
+Function ConvertToJapaneseDateTime(inputString As String) As String
+    ' 文字列が14桁であることを確認
+    If Len(inputString) <> 14 Then
+        ConvertToJapaneseDateTime = "Invalid Input"
+        Exit Function
+    End If
+
+    ' 年、月、日、時、分、秒を抽出
+    Dim yearStr As String
+    Dim monthStr As String
+    Dim dayStr As String
+    Dim hourStr As String
+    Dim minuteStr As String
+    Dim secondStr As String
+
+    yearStr = Left(inputString, 4)
+    monthStr = Mid(inputString, 5, 2)
+    dayStr = Mid(inputString, 7, 2)
+    hourStr = Mid(inputString, 9, 2)
+    minuteStr = Mid(inputString, 11, 2)
+    secondStr = Mid(inputString, 13, 2)
+
+    ' フォーマットして結果を返す
+    ConvertToJapaneseDateTime = monthStr & "月" & dayStr & "日" & hourStr & "時" & minuteStr & "分"
+End Function
+
+
+Sub TestConvertToJapaneseDateTime()
+    Dim inputString As String
+    Dim formattedString As String
+
+    inputString = "20240606180022"
+    formattedString = ConvertToJapaneseDateTime(inputString)
+
+    MsgBox formattedString
+End Sub
